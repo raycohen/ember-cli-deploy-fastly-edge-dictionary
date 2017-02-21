@@ -23,10 +23,10 @@ module.exports = {
   name: 'ember-cli-deploy-fastly-edge-dictionary',
 
   createDeployPlugin: function(options) {
-    debugger;
     var FastlyClient = require('./lib/fastly-client');
 
     var DeployPlugin = DeployPluginBase.extend({
+      name: options.name,
       defaultConfig: {
         filePattern: 'index.html',
         maxRecentUploads: 10,
@@ -53,9 +53,12 @@ module.exports = {
         revisionData: function(context) {
           return context.revisionData;
         },
+        fastlyConfigVersion: function(context, pluginHelper) {
+          return pluginHelper.readConfig('fastlyClient').getCurrentVersion();
+        },
         fastlyClient: function(context, pluginHelper) {
           var options = {
-            dictionaryId: pluginHelper.readConfig('dictionaryId'),
+            dictionaryName: pluginHelper.readConfig('dictionaryName'),
             fastlyAPIKey: pluginHelper.readConfig('fastlyAPIKey'),
             serviceId: pluginHelper.readConfig('serviceId')
           };
@@ -64,13 +67,7 @@ module.exports = {
         }
       },
 
-      configure: function(context) {
-        throw new Error('config failed!');
-        // TODO make sure we have service id, api key, and dictionary name
-      },
-
       upload: function(context) {
-        throw new Error('upload failed!');
         var revisionKey       = this.readConfig('revisionKey');
         var distDir           = this.readConfig('distDir');
         var filePattern       = this.readConfig('filePattern');
@@ -78,13 +75,14 @@ module.exports = {
         var maxRecentUploads  = this.readConfig('maxRecentUploads');
         var filePath          = path.join(distDir, filePattern);
         var dictionaryName    = this.readConfig('dictionaryName');
+        var _this = this;
 
         this.log('Inserting `' + filePath + '` into fastly edge dictionary', { verbose: true });
 
         return readFileContents(filePath)
           //.then(redisDeployClient.upload.bind(redisDeployClient, keyPrefix, revisionKey, this.readConfig('revisionData')))
           .then(function(fileContents) {
-            return this._insertIntoEdgeDictionary.bind(this, fileContents, keyPrefix, revisionKey, this.readConfig('revisionData'))
+            return _this._insertIntoEdgeDictionary(fileContents, keyPrefix, revisionKey, _this.readConfig('revisionData'))
           }).then(this._uploadSuccessMessage.bind(this))
           .then(function(key) {
             return { redisKey: key };
@@ -94,7 +92,8 @@ module.exports = {
 
       _insertIntoEdgeDictionary: function(fileContents, key, revisionKey, revisionData) {
         var fastlyClient = this.readConfig('fastlyClient');
-        return fastlyClient.insert(key, fileContents);
+
+        return fastlyClient.upload(key, fileContents);
       },
 
       _uploadSuccessMessage: function(key) {
