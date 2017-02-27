@@ -1,27 +1,39 @@
 # ember-cli-deploy-fastly-edge-dictionary
 
-This README outlines the details of collaborating on this Ember addon.
+Similar to the functionality of [ember-cli-deploy-redis](https://github.com/ember-cli-deploy/ember-cli-deploy-redis), but uses Fastly edge dictionaries as the key-value store. You will likely want to pair this addon with an addon like ember-cli-deploy-redis so that your development and staging environments also have access to your uploaded index files.
 
-## Installation
+## What are Fastly Edge Dictionaries?
 
-* `git clone <repository-url>` this repository
-* `cd ember-cli-deploy-fastly-edge-dictionary`
-* `npm install`
-* `bower install`
+[Fastly](https://www.fastly.com/) is a CDN. [Edge Dictionaries](https://docs.fastly.com/guides/edge-dictionaries/about-edge-dictionaries) are a simple key-value store that you can access via the fastly API. You can reference the values stored in an edge dictionary in VCL - the configuration language used to control Fastly's custom version of Varnish.
 
-## Running
+## Example Configuration (simplified)
 
-* `ember serve`
-* Visit your app at [http://localhost:4200](http://localhost:4200).
+With the example configuration, requests to `/my/app/route` won't need to hit the origin server.
 
-## Running Tests
+The `synthetic` command available within the `vcl_error` subroutine allows delivery of content defined in an edge dictionary. To use it, read the index content out of the edge dictionary and store it in a temporary header. Then use a custom error value to pass control to the `vcl_error` subroutine.
 
-* `npm test` (Runs `ember try:each` to test your addon against multiple Ember versions)
-* `ember test`
-* `ember test --server`
+```
+sub vcl_fetch {
 
-## Building
+  if (req.url ~ "/my/app/route") {
+    set req.http.X-Content = table.lookup(my_app_edge_dictionary, "my-app-prefix:index");
+    error 910; # a custom error number to indicate `X-Content` should be used as the content
+  }
 
-* `ember build`
+  ...
+}
 
-For more information on using ember-cli, visit [https://ember-cli.com/](https://ember-cli.com/).
+sub vcl_error {
+
+  if (obj.status == 910) {
+    set obj.status = 200;
+    set obj.http.Content-Type = "text/html";
+    synthetic req.http.X-Content;
+    return(deliver);
+  }
+
+  ...
+}
+
+```
+
