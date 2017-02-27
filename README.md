@@ -13,7 +13,7 @@ With the example configuration, requests to `/my/app/route` won't need to hit th
 The `synthetic` command available within the `vcl_error` subroutine allows delivery of content defined in an edge dictionary. To use it, read the index content out of the edge dictionary and store it in a temporary header. Then use a custom error value to pass control to the `vcl_error` subroutine.
 
 ```
-sub vcl_fetch {
+sub vcl_recv {
 
   if (req.url ~ "/my/app/route") {
     set req.http.X-Content = table.lookup(my_app_edge_dictionary, "my-app-prefix:index");
