@@ -4,7 +4,7 @@ Similar to the functionality of [ember-cli-deploy-redis](https://github.com/embe
 
 ## What are Fastly Edge Dictionaries?
 
-[Fastly](https://www.fastly.com/) is a CDN. [Edge Dictionaries](https://docs.fastly.com/guides/edge-dictionaries/about-edge-dictionaries) are a simple key-value store that you can access via the fastly API. You can reference the values stored in an edge dictionary in VCL - the configuration language used to control Fastly's custom version of Varnish.
+[Fastly](https://www.fastly.com/) is a CDN. [Edge Dictionaries](https://docs.fastly.com/guides/edge-dictionaries/about-edge-dictionaries) are a simple key-value store that you can access via the Fastly API. You can reference the values stored in an edge dictionary in VCL - the configuration language used to control Fastly's custom version of Varnish.
 
 ## Example Configuration (simplified)
 
@@ -37,3 +37,12 @@ sub vcl_error {
 
 ```
 
+## Useful considerations when using edge dictionaries
+
+[limitations and considerations](https://docs.fastly.com/guides/edge-dictionaries/about-edge-dictionaries#limitations-and-considerations)
+
+ * Dictionaries are limited to 1000 key-value pairs
+ * Keys are limited to 256 characters
+ * Values are limited to 8000 characters
+ * You must create a dictionary using the API to be able to manipulate it using the API
+ * You cannot use ESI behavior with content taken from a dictionary and delivered with `synthetic`
