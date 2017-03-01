@@ -77,7 +77,7 @@ module.exports = {
         var dictionaryName    = this.readConfig('dictionaryName');
         var _this = this;
 
-        this.log('Inserting `' + filePath + '` into fastly edge dictionary', { verbose: true });
+        this.log('Inserting `' + filePath + '` into fastly edge dictionary key ' + keyPrefix, { verbose: true });
 
         return readFileContents(filePath)
           //.then(redisDeployClient.upload.bind(redisDeployClient, keyPrefix, revisionKey, this.readConfig('revisionData')))
