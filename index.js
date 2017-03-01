@@ -38,7 +38,7 @@ module.exports = {
         },
         activationSuffix: 'current',
         activeContentSuffix: 'current-content',
-        didDeployMessage: function(context){
+        didDeployMessage: function(context) {
           var revisionKey = context.revisionData && context.revisionData.revisionKey;
           var activatedRevisionKey = context.revisionData && context.revisionData.activatedRevisionKey;
           if (revisionKey && !activatedRevisionKey) {
@@ -83,17 +83,20 @@ module.exports = {
           //.then(redisDeployClient.upload.bind(redisDeployClient, keyPrefix, revisionKey, this.readConfig('revisionData')))
           .then(function(fileContents) {
             return _this._insertIntoEdgeDictionary(fileContents, keyPrefix, revisionKey, _this.readConfig('revisionData'))
-          }).then(this._uploadSuccessMessage.bind(this))
-          .then(function(key) {
+          }).then(function() {
+            return _this._uploadSuccessMessage(keyPrefix);
+          }).then(function(key) {
             return { redisKey: key };
           })
           .catch(this._errorMessage.bind(this));
       },
 
-      _insertIntoEdgeDictionary: function(fileContents, key, revisionKey, revisionData) {
+      _insertIntoEdgeDictionary: function(fileContents, keyPrefix, revisionKey, revisionData) {
         var fastlyClient = this.readConfig('fastlyClient');
 
-        return fastlyClient.upload(key, fileContents);
+        return fastlyClient.upload(keyPrefix, fileContents).then(function(key) {
+          return fastlyClient.upload(keyPrefix + ':' + revisionKey, fileContents);
+        });
       },
 
       _uploadSuccessMessage: function(key) {
