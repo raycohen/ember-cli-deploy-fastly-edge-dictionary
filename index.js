@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 
-var Promise = require('ember-cli/lib/ext/promise');
+var RSVP = require('rsvp');
 var path = require('path');
 var fs = require('fs');
 var request = require('request');
@@ -101,12 +101,12 @@ module.exports = {
 
       _uploadSuccessMessage: function(key) {
         this.log('Inserted into fastly edge dictionary with key `' + key + '`', { verbose: true });
-        return Promise.resolve(key);
+        return RSVP.Promise.resolve(key);
       },
 
       _errorMessage: function(error) {
         this.log(error, { color: 'red' });
-        return Promise.reject(error);
+        return RSVP.Promise.reject(error);
       }
     });
 
